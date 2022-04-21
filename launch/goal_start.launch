@@ -1,0 +1,8 @@
+<launch>
+  <!-- test for load .yaml -->>
+  <rosparam file="$(find goal_gen)/params/test.yaml"/>
+  <!--rosparam file="$(find slamware_ros_sdk)/cfg/control_robot_wp.yaml"/-->
+
+
+  <node name="goal_pub" pkg="goal_gen" type="goal_pub.py" output="screen"/>
+</launch>

@@ -5,6 +5,7 @@ import yaml
 import os
 from std_msgs.msg import String
 from nav_msgs.msg import Odometry
+from geometry_msgs.msg import PoseStamped, Twist, Point, PoseWithCovarianceStamped
 
 class CreateYaml():
     def __init__(self):
@@ -27,7 +28,7 @@ class CreateYaml():
         self.battery_charge_percentage = 10
         
         self.str_sub = rospy.Subscriber("create_wp", String, self.str_CB)
-        self.odom_sub = rospy.Subscriber("/odom", Odometry, self.odom_CB)
+        self.odom_sub = rospy.Subscriber("/amcl_pose",PoseWithCovarianceStamped, self.odom_CB)
         
         rospy.spin()
     

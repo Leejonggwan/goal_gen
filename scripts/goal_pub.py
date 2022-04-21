@@ -4,7 +4,8 @@ from ast import Str
 import rospy
 from std_msgs.msg import String
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import PoseStamped, Twist, Point
+from geometry_msgs.msg import PoseStamped, Twist, Point, PoseWithCovarianceStamped
+from move_base_msgs.msg import MoveBaseActionResult
 
 class PatrolLIMO():
     def __init__(self):
@@ -23,27 +24,20 @@ class PatrolLIMO():
         self.old_stop_z = 0
         
         self.count_number = 1000000
-        
+        self.DISTANCE_TH = 0.2
         self.now_wp = ""
         
         self.waypoint_sort()
         
-        self.odom_sub = rospy.Subscriber("/odom",Odometry, self.odom_CB)
-        self.goal_pub = rospy.Publisher("move_base_simple/goal", PoseStamped, queue_size=1)
+        print("Start")
+        print(self.wp_key)
         
+        self.odom_sub = rospy.Subscriber("/amcl_pose",PoseWithCovarianceStamped, self.odom_CB)
+        self.goal_pub = rospy.Publisher("/move_base_simple/goal", PoseStamped, queue_size=1)
+        self.result_sub = rospy.Subscriber("/move_base/result",MoveBaseActionResult, self.result_CB)
         
-    def patrol(self):
+        rospy.spin()
         
-        while not rospy.is_shutdown():
-            
-            self.find_now_wp()
-        
-            self.next_wp()
-            self.pub_goal(self.final_wp)
-            
-            while not self.is_goal():
-                pass
-
     def pub_goal(self,wp_final):
         
         tmp_pose = PoseStamped()
@@ -88,7 +82,7 @@ class PatrolLIMO():
                 self.next_wp_num = i + 1
         
         if self.next_wp_num >= len(self.wp_key):
-            self.next_wp_num = 1
+            self.next_wp_num = 0
         
         self.final_wp = self.wp_key[self.next_wp_num]
         
@@ -99,10 +93,11 @@ class PatrolLIMO():
         
         for i in self.waypoints.keys():
             distance = self.calc_distance(i)
-            
+            print(distance)
             if self.init_dist > distance:
                 self.init_dist = distance
                 self.now_wp = i
+                print(self.now_wp)
         
     def is_goal(self):
         
@@ -142,3 +137,16 @@ class PatrolLIMO():
         x_diff = self.robot_pose.pose.pose.position.x - self.waypoints[pose_A][0]
         y_diff = self.robot_pose.pose.pose.position.y - self.waypoints[pose_A][1]
         return (x_diff ** 2 + y_diff ** 2) ** 0.5
+    
+    
+    def result_CB(self, data):
+        
+        self.find_now_wp()
+    
+        self.next_wp()
+        self.pub_goal(self.final_wp)
+        
+        print("Goal")
+
+if __name__=="__main__":
+    PL = PatrolLIMO()
